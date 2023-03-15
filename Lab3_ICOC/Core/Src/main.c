@@ -125,7 +125,9 @@ HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, InputCaptureBuffer, IC_BUFFER_SIZE);
 	  {
 		  timestamp = HAL_GetTick();
 		  averageRisingEdgePeriod = IC_Calc_Period();
-		  MotorReadRPM = (5000000/averageRisingEdgePeriod)/64;
+
+		  if (averageRisingEdgePeriod == 0) 	MotorReadRPM = 0;
+		  else  	MotorReadRPM = (5000000/averageRisingEdgePeriod)/64.0;
 
 		  switch (MotorControlEnable) {
 		  	case 0:
@@ -137,33 +139,22 @@ HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, InputCaptureBuffer, IC_BUFFER_SIZE);
 					duty = MotorSetDuty;
 					check_control_en = 1;
 				}
-				if (MotorReadRPM < MotorSetRPM && duty < 100) {
-					if (MotorReadRPM - MotorSetRPM >= -1 && MotorReadRPM - MotorSetRPM <= -0.1) {
-						duty += 0.1;
-					}
-					else if(MotorReadRPM - MotorSetRPM < -1){
-						duty += 1;
-					}
+				if (MotorSetRPM == 0)	duty = 0;
+
+				else if (MotorReadRPM < MotorSetRPM && duty < 100) {
+					if (MotorReadRPM - MotorSetRPM >= -1 && MotorReadRPM - MotorSetRPM <= -0.1) 	duty += 0.1;
+					else if(MotorReadRPM - MotorSetRPM < -1)	duty += 1;
 				}
+
 				else if (MotorReadRPM > MotorSetRPM && duty > 0) {
-					if (MotorReadRPM - MotorSetRPM <= 1 && MotorReadRPM - MotorSetRPM >= 0.1) {
-						duty -= 0.1;
-					}
-					else if (MotorReadRPM - MotorSetRPM >= 1) {
-						duty -= 1;
-					}
+					if (MotorReadRPM - MotorSetRPM <= 1 && MotorReadRPM - MotorSetRPM >= 0.1) 	duty -= 0.1;
+					else if (MotorReadRPM - MotorSetRPM >= 1) 	duty -= 1;
 				}
-
-
 
 				__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,duty*10);
 				break;
 		}
-
-
 	  }
-
-
   }
   /* USER CODE END 3 */
 }
@@ -260,7 +251,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 500;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
